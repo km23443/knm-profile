@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>編輯頁面 — Profile Builder</title>
+<link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+<header class="topbar">
+  <div style="display:flex; align-items:center; gap:18px;">
+    <a href="/admin" class="muted-link" style="font-size:14px;">← 返回儀表板</a>
+    <div class="brand" style="font-size:15px;">編輯頁面</div>
+  </div>
+  <div class="user">
+    <a href="#" id="openLink" target="_blank" class="btn btn-ghost btn-sm">在新分頁開啟</a>
+    <button class="btn btn-sm" id="saveBtn">💾 儲存變更</button>
+  </div>
+</header>
+
+<div class="editor-wrap">
+  <!-- ── Left: form ───────────────────────────────────────────── -->
+  <section class="editor-form">
+    <div class="alert alert-error" id="alert"></div>
+    <div class="alert alert-ok" id="okAlert"></div>
+
+    <div class="url-preview">
+      🔗 <a id="publicUrl" href="#" target="_blank">/loading…</a>
+    </div>
+
+    <!-- Basic info -->
+    <div class="section">
+      <h3>基本資料 <span class="badge">BASIC</span></h3>
+
+      <div class="field">
+        <label class="float">公開網址 (slug)</label>
+        <input type="text" id="slug" pattern="[a-zA-Z0-9_-]{2,40}" />
+        <div class="help">修改 slug 等同於修改公開網址。需是唯一的英數/底線/連字號 (2-40 字)。</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label class="float">顯示名稱</label>
+          <input type="text" id="username" maxlength="40" />
+        </div>
+        <div class="field">
+          <label class="float">名稱顏色</label>
+          <input type="color" id="themeColor" style="height:48px; padding:6px;" />
+        </div>
+        <div class="field">
+          <label class="float">主題強調色</label>
+          <input type="color" id="accentColor" style="height:48px; padding:6px;" />
+          <div class="help" style="margin-top:4px;">卡片 hover、社群圖示發光色</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="float">位置／狀態文字</label>
+        <input type="text" id="location" placeholder="e.g. against himself / Tokyo / online" />
+      </div>
+
+      <!-- Username text style + glow (merged here) -->
+      <div class="subsection">
+        <div class="subhead">顯示名稱樣式 <span class="badge-soft">TEXT STYLE</span></div>
+        <div class="grid-3">
+          <div class="field">
+            <label class="float">文字風格</label>
+            <select id="usernameVariant">
+              <option value="plain">一般（純色）</option>
+              <option value="glass">玻璃質感</option>
+              <option value="frost">霜面（流光）</option>
+              <option value="neon">霓虹發光</option>
+              <option value="chrome">鉻金屬</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="float">名稱字體 (px)</label>
+            <input type="range" id="sizeUsername" min="32" max="160" step="2" />
+            <div class="slider-val" id="sizeUsernameVal">88px</div>
+          </div>
+          <div class="field">
+            <label class="float">晃動速度 (秒，0=關閉)</label>
+            <input type="range" id="usernameSway" min="0" max="12" step="0.5" />
+            <div class="slider-val" id="usernameSwayVal">0s</div>
+          </div>
+        </div>
+        <div class="help" style="margin:-2px 0 14px;">玻璃／霜面／鉻金為文字填色效果；霓虹會利用主題強調色作為光暈。晃動速度越大→越慢。</div>
+
+        <div class="subhead" style="margin-top:6px;">名稱發光 <span class="badge-soft">GLOW</span></div>
+        <div class="grid-3">
+          <div class="field">
+            <label class="float">光芒顏色</label>
+            <input type="color" id="glowColor" style="height:48px; padding:6px;" />
+          </div>
+          <div class="field">
+            <label class="float">光芒強度 (%)</label>
+            <input type="range" id="glowStrength" min="0" max="100" step="5" />
+            <div class="slider-val" id="glowStrengthVal">80%</div>
+          </div>
+          <div class="field">
+            <label class="float">脈動速度</label>
+            <select id="glowPulse">
+              <option value="off">關閉（靜態）</option>
+              <option value="slow">慢</option>
+              <option value="normal" selected>正常</option>
+              <option value="fast">快</option>
+            </select>
+          </div>
+        </div>
+        <div class="help" style="margin-top:-4px;">把強度拉到 0 或脈動速度設為「關閉」可關閉光芒動畫。</div>
+      </div>
+    </div>
+
+    <!-- Background -->
+    <div class="section">
+      <h3>背景 <span class="badge">BACKGROUND</span></h3>
+      <div class="field">
+        <label class="float">背景影片 URL (mp4/webm) — 若填寫會優先於圖片</label>
+        <input type="url" id="backgroundVideo" placeholder="https://example.com/loop.mp4" />
+        <div class="help">留空=使用下方靜態圖片。影片會自動循環、靜音、全螢幕鋪滿。</div>
+      </div>
+      <div class="field">
+        <label class="float">背景圖片 URL</label>
+        <input type="url" id="backgroundImage" placeholder="https://..." />
+        <div class="help">支援任何公開圖片 URL。建議用 1920×1080 以上。</div>
+      </div>
+      <div class="bg-presets" id="bgPresets"></div>
+    </div>
+
+    <!-- Header (icon picker only) -->
+    <div class="section">
+      <h3>頂端裝飾 <span class="badge">HEADER</span></h3>
+      <div class="help" style="margin:-6px 0 10px;">頁面頂端中央顯示的 SVG 裝飾圖示。</div>
+      <div class="icon-picker" id="iconPicker"></div>
+    </div>
+
+    <!-- Activity card -->
+    <div class="section">
+      <h3>活動卡片 <span class="badge">ACTIVITY</span></h3>
+      <div class="field avatar-field">
+        <label class="float">卡片內小頭貼</label>
+        <div class="avatar-uploader">
+          <div class="avatar-preview" id="avatarPreview" title="點擊上傳圖片">
+            <img id="avatarPreviewImg" alt="" />
+            <span class="avatar-placeholder" id="avatarPlaceholder">點此<br/>上傳</span>
+          </div>
+          <div class="avatar-actions">
+            <button type="button" class="btn btn-sm" id="uploadAvatarBtn">📁 從電腦上傳</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="clearAvatarBtn">清除</button>
+            <input type="file" id="avatarFile" accept="image/*" hidden />
+            <div class="help">圖片自動縮放 200×200。</div>
+          </div>
+        </div>
+        <details class="avatar-url-fallback">
+          <summary>進階：直接貼上圖片網址</summary>
+          <input type="url" id="actAvatar" placeholder="https://i.pravatar.cc/100" />
+        </details>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="float">名稱</label>
+          <input type="text" id="actName" />
+        </div>
+        <div class="field">
+          <label class="float">動詞</label>
+          <input type="text" id="actVerb" placeholder="Playing / Listening to / Watching" />
+        </div>
+      </div>
+      <div class="field">
+        <label class="float">狀態</label>
+        <input type="text" id="actStatus" placeholder="Roblox / Lo-fi beats / Netflix" />
+      </div>
+      <!-- Card glass style -->
+      <div class="grid-2" style="margin-top:8px;">
+        <div class="field">
+          <label class="float">卡片背景透明度 (%)</label>
+          <input type="range" id="cardBgAlpha" min="0" max="100" step="5" />
+          <div class="slider-val" id="cardBgAlphaVal">55%</div>
+        </div>
+        <div class="field">
+          <label class="float">卡片模糊 (px)</label>
+          <input type="range" id="cardBlur" min="0" max="40" step="1" />
+          <div class="slider-val" id="cardBlurVal">18px</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="float">卡片邊框透明度 (%)</label>
+          <input type="range" id="cardBorderAlpha" min="0" max="60" step="1" />
+          <div class="slider-val" id="cardBorderAlphaVal">9%</div>
+        </div>
+        <div class="field">
+          <label class="float">卡片圓角 (px)</label>
+          <input type="range" id="cardRadius" min="0" max="40" step="1" />
+          <div class="slider-val" id="cardRadiusVal">14px</div>
+        </div>
+      </div>
+      <div class="help" style="margin-top:6px;">提示：滑鼠移到卡片上時，主題強調色會沿著外緣緩慢流轉。</div>
+    </div>
+
+    <!-- Size sliders -->
+    <div class="section">
+      <h3>區塊尺寸 <span class="badge">SIZES</span></h3>
+      <div class="help" style="margin:-6px 0 10px;">調整公開頁面各元素的大小。名稱字體已移到「顯示名稱樣式」上方。</div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="float">裝飾 ICON 大小 (px)</label>
+          <input type="range" id="sizeAccent" min="24" max="140" step="2" />
+          <div class="slider-val" id="sizeAccentVal">48px</div>
+        </div>
+        <div class="field">
+          <label class="float">活動卡片頭貼 (px)</label>
+          <input type="range" id="sizeAvatar" min="28" max="80" step="2" />
+          <div class="slider-val" id="sizeAvatarVal">42px</div>
+        </div>
+        <div class="field">
+          <label class="float">活動卡片整體縮放</label>
+          <input type="range" id="sizeCardScale" min="0.7" max="1.6" step="0.05" />
+          <div class="slider-val" id="sizeCardScaleVal">1.00×</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="float">社群圖示大小 (px)</label>
+          <input type="range" id="sizeSocial" min="20" max="60" step="2" />
+          <div class="slider-val" id="sizeSocialVal">30px</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Socials -->
+    <div class="section">
+      <h3>社群連結 <span class="badge">SOCIAL</span></h3>
+      <div id="socialList"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="addSocial" style="margin-top:8px;">＋ 新增社群連結</button>
+    </div>
+
+    <!-- Particles & audio -->
+    <div class="section">
+      <h3>粒子效果 + 音效 <span class="badge">EXTRAS</span></h3>
+      <div class="grid-3">
+        <div class="field">
+          <label class="float">粒子數量 (0-200)</label>
+          <input type="number" id="particleCount" min="0" max="200" />
+        </div>
+        <div class="field">
+          <label class="float">粒子顏色</label>
+          <input type="color" id="particleColor" style="height:48px; padding:6px;" />
+        </div>
+        <div class="field">
+          <label class="float">粒子符號 (空白分隔)</label>
+          <input type="text" id="particleSymbols" placeholder="❄ ✦ ✧ · ◦" />
+        </div>
+      </div>
+      <div class="field">
+        <label class="float">背景音樂 URL（留空=不播放）</label>
+        <input type="url" id="audioUrl" placeholder="https://example.com/music.mp3" />
+        <div class="help">需是公開可播放的音訊檔案 URL（mp3 / ogg / wav）。</div>
+      </div>
+    </div>
+
+    <div class="editor-toolbar">
+      <button type="button" class="btn btn-ghost" id="reloadPreviewBtn">🔄 重新整理預覽</button>
+      <button type="button" class="btn" id="saveBtn2">💾 儲存變更</button>
+    </div>
+  </section>
+
+  <!-- ── Right: preview ──────────────────────────────────────── -->
+  <section class="editor-preview">
+    <iframe id="preview" title="preview"></iframe>
+  </section>
+</div>
+
+<script>
+const ICON_NAMES = ['katana', 'gun', 'star', 'moon', 'crown', 'flame', 'heart', 'bolt'];
+const SOCIAL_TYPES = ['discord', 'tiktok', 'instagram', 'twitter', 'youtube', 'github', 'spotify', 'twitch', 'email', 'website'];
+const BG_PRESETS = [
+  'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1444080748397-f442aa95c3e5?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1530908295418-a12e326966ba?auto=format&fit=crop&w=1920&q=80'
+];
+
+const slugFromUrl = decodeURIComponent(location.pathname.split('/').pop());
+const alertBox = document.getElementById('alert');
+const okBox = document.getElementById('okAlert');
+const preview = document.getElementById('preview');
+const publicUrl = document.getElementById('publicUrl');
+const openLink = document.getElementById('openLink');
+
+let originalSlug = slugFromUrl;
+let currentSite = null;
+let chosenIcon = 'katana';
+
+const els = {};
+function $(id) { return document.getElementById(id); }
+['slug','username','themeColor','accentColor','location','backgroundImage','backgroundVideo',
+ 'actAvatar','actName','actVerb','actStatus',
+ 'particleCount','particleSymbols','particleColor','audioUrl',
+ 'usernameVariant','usernameSway',
+ 'glowColor','glowStrength','glowPulse',
+ 'sizeAccent','sizeUsername','sizeAvatar','sizeCardScale','sizeSocial',
+ 'cardBgAlpha','cardBlur','cardBorderAlpha','cardRadius'
+].forEach(function(id) { els[id] = $(id); });
+
+function showError(msg) { alertBox.textContent = msg; alertBox.classList.add('show'); okBox.classList.remove('show'); setTimeout(function(){ alertBox.classList.remove('show'); }, 4000); }
+function showOk(msg) { okBox.textContent = msg; okBox.classList.add('show'); alertBox.classList.remove('show'); setTimeout(function(){ okBox.classList.remove('show'); }, 2500); }
+
+// ─── Icon picker ─────────────────────────────────────────────
+const ICON_SVG = {
+  katana: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 3.3a1 1 0 0 0-1.4 0L9.88 12.7l-3.03-3.03a1 1 0 0 0-1.41 0l-.71.7a1 1 0 0 0 0 1.42l3.03 3.03-3.2 3.2a2.5 2.5 0 1 0 1.41 1.41l3.2-3.2 3.03 3.03a1 1 0 0 0 1.41 0l.71-.71a1 1 0 0 0 0-1.41l-3.03-3.03L20.7 4.7a1 1 0 0 0 0-1.4zM5.5 20a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>',
+  gun: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v2h1v2H2v4h4l3 6 2-1-2-5h4v-2H10V7h10V5H7z"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  crown: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16l-2-9 5 4 4-7 4 7 5-4-2 9H5zm0 2h14v2H5v-2z"/></svg>',
+  flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 1-3s-1 0-2 2c0 0-3-4 0-9 2 0 3 2 3 2s1-1 3-2z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.7-9.6-9.2C1.1 8.6 3 5 6.4 5c2 0 3.6 1 4.6 2.5C12 6 13.6 5 15.6 5 19 5 20.9 8.6 19.6 11.8 17.5 16.3 12 21 12 21z"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 21l1-7H7l5-11h2l-1 7h5l-5 11h-2z"/></svg>'
+};
+const iconPicker = $('iconPicker');
+ICON_NAMES.forEach(function(name) {
+  const div = document.createElement('div');
+  div.className = 'icon-pick';
+  div.dataset.icon = name;
+  div.title = name;
+  div.innerHTML = ICON_SVG[name];
+  div.addEventListener('click', function() { chosenIcon = name; renderIconPicker(); });
+  iconPicker.appendChild(div);
+});
+function renderIconPicker() {
+  iconPicker.querySelectorAll('.icon-pick').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.icon === chosenIcon);
+  });
+}
+
+// ─── Background presets ──────────────────────────────────────
+const bgPresets = $('bgPresets');
+BG_PRESETS.forEach(function(url) {
+  const div = document.createElement('div');
+  div.className = 'bg-preset';
+  div.style.backgroundImage = 'url("' + url + '")';
+  div.dataset.url = url;
+  div.addEventListener('click', function() { els.backgroundImage.value = url; renderBgActive(); });
+  bgPresets.appendChild(div);
+});
+function renderBgActive() {
+  bgPresets.querySelectorAll('.bg-preset').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.url === els.backgroundImage.value);
+  });
+}
+els.backgroundImage.addEventListener('input', renderBgActive);
+
+// ─── Socials editor ──────────────────────────────────────────
+const socialList = $('socialList');
+function makeSocialRow(s) {
+  s = s || { type: 'discord', url: '' };
+  const row = document.createElement('div');
+  row.className = 'social-row-edit';
+  row.innerHTML =
+    '<select>' + SOCIAL_TYPES.map(function(t) {
+      return '<option value="' + t + '"' + (t===s.type?' selected':'') + '>' + t + '</option>';
+    }).join('') + '</select>' +
+    '<input type="text" placeholder="https://..." value="' + (s.url ? s.url.replace(/"/g,'&quot;') : '') + '" />' +
+    '<button type="button" class="icon-btn" title="刪除">✕</button>';
+  row.querySelector('button').addEventListener('click', function() { row.remove(); });
+  return row;
+}
+$('addSocial').addEventListener('click', function() { socialList.appendChild(makeSocialRow()); });
+
+// ─── Load site data ──────────────────────────────────────────
+async function loadSite() {
+  const r = await fetch('/api/sites/' + encodeURIComponent(slugFromUrl));
+  if (!r.ok) {
+    if (r.status === 401) { location.href = '/login'; return; }
+    showError('找不到此頁面');
+    return;
+  }
+  const site = await r.json();
+  currentSite = site;
+  originalSlug = site.slug;
+  fillForm(site.config, site.slug);
+  updateUrl(site.slug);
+  refreshPreview();
+}
+
+function fillForm(c, slug) {
+  els.slug.value = slug;
+  els.username.value = c.username || '';
+  els.themeColor.value = c.themeColor || '#ffffff';
+  els.accentColor.value = c.accentColor || '#a13ecf';
+  els.location.value = c.location || '';
+  els.backgroundImage.value = c.backgroundImage || '';
+  els.backgroundVideo.value = c.backgroundVideo || '';
+  els.actAvatar.value = (c.activity && c.activity.avatar) || '';
+  updateAvatarPreview();
+  els.actName.value   = (c.activity && c.activity.name)   || '';
+  els.actVerb.value   = (c.activity && c.activity.verb)   || '';
+  els.actStatus.value = (c.activity && c.activity.status) || '';
+  els.particleCount.value = (c.particles && c.particles.count != null) ? c.particles.count : 55;
+  els.particleSymbols.value = ((c.particles && c.particles.symbols) || []).join(' ');
+  els.particleColor.value = (c.particles && /^#[0-9a-f]{6}$/i.test(c.particles.color||'')) ? c.particles.color : '#ffffff';
+  els.audioUrl.value = c.audioUrl || '';
+  chosenIcon = ICON_NAMES.indexOf(c.accentIcon) !== -1 ? c.accentIcon : 'katana';
+  renderIconPicker();
+
+  socialList.innerHTML = '';
+  (c.socials || []).forEach(function(s) { socialList.appendChild(makeSocialRow(s)); });
+  if (!socialList.children.length) socialList.appendChild(makeSocialRow());
+  renderBgActive();
+
+  // Username style
+  const us = c.usernameStyle || {};
+  els.usernameVariant.value = ['plain','glass','frost','neon','chrome'].indexOf(us.variant) !== -1 ? us.variant : 'plain';
+  els.usernameSway.value    = us.swaySpeed != null ? us.swaySpeed : 0;
+
+  // Glow
+  const gl = c.usernameGlow || {};
+  els.glowColor.value    = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(gl.color || '') ? gl.color : '#ffffff';
+  els.glowStrength.value = gl.strength != null ? gl.strength : 80;
+  els.glowPulse.value    = ['off','slow','normal','fast'].indexOf(gl.pulse) !== -1 ? gl.pulse : 'normal';
+
+  // Sizes
+  const sz = c.sizes || {};
+  els.sizeAccent.value    = sz.accentIcon    != null ? sz.accentIcon    : 48;
+  els.sizeUsername.value  = sz.username      != null ? sz.username      : 88;
+  els.sizeAvatar.value    = sz.avatar        != null ? sz.avatar        : 42;
+  els.sizeCardScale.value = sz.activityScale != null ? sz.activityScale : 1;
+  els.sizeSocial.value    = sz.socialIcon    != null ? sz.socialIcon    : 30;
+
+  // Card style
+  const cs = c.cardStyle || {};
+  els.cardBgAlpha.value     = cs.bgAlpha     != null ? cs.bgAlpha     : 55;
+  els.cardBlur.value        = cs.blur        != null ? cs.blur        : 18;
+  els.cardBorderAlpha.value = cs.borderAlpha != null ? cs.borderAlpha : 9;
+  els.cardRadius.value      = cs.radius      != null ? cs.radius      : 14;
+
+  updateAllLabels();
+}
+
+function updateUrl(slug) {
+  const url = location.origin + '/' + slug;
+  publicUrl.textContent = '/' + slug;
+  publicUrl.href = url;
+  openLink.href = url;
+}
+
+function collectConfig() {
+  const symbols = els.particleSymbols.value.trim().split(/\s+/).filter(Boolean);
+  const socials = Array.from(socialList.children).map(function(row) {
+    const sel = row.querySelector('select');
+    const inp = row.querySelector('input');
+    return { type: sel.value, url: inp.value.trim() };
+  }).filter(function(s) { return s.url; });
+
+  const usernameStyle = {
+    variant:   ['plain','glass','frost','neon','chrome'].indexOf(els.usernameVariant.value) !== -1 ? els.usernameVariant.value : 'plain',
+    swaySpeed: Math.max(0, Math.min(20, parseFloat(els.usernameSway.value) || 0))
+  };
+  const usernameGlow = {
+    color:    els.glowColor.value || '#ffffff',
+    strength: Math.max(0, Math.min(100, parseInt(els.glowStrength.value) || 0)),
+    pulse:    ['off','slow','normal','fast'].indexOf(els.glowPulse.value) !== -1 ? els.glowPulse.value : 'normal'
+  };
+  const sizes = {
+    accentIcon:    parseInt(els.sizeAccent.value)     || 48,
+    username:      parseInt(els.sizeUsername.value)   || 88,
+    avatar:        parseInt(els.sizeAvatar.value)     || 42,
+    activityScale: parseFloat(els.sizeCardScale.value) || 1,
+    socialIcon:    parseInt(els.sizeSocial.value)     || 30
+  };
+  const cardStyle = {
+    bgAlpha:     Math.max(0, Math.min(100, parseInt(els.cardBgAlpha.value)     || 0)),
+    blur:        Math.max(0, Math.min(40,  parseInt(els.cardBlur.value)        || 0)),
+    borderAlpha: Math.max(0, Math.min(60,  parseInt(els.cardBorderAlpha.value) || 0)),
+    radius:      Math.max(0, Math.min(40,  parseInt(els.cardRadius.value)      || 0))
+  };
+
+  return {
+    username: els.username.value.trim() || 'profile',
+    location: els.location.value.trim(),
+    themeColor: els.themeColor.value,
+    accentColor: els.accentColor.value,
+    backgroundImage: els.backgroundImage.value.trim(),
+    backgroundVideo: els.backgroundVideo.value.trim(),
+    audioUrl: els.audioUrl.value.trim(),
+    accentIcon: chosenIcon,
+    usernameStyle: usernameStyle,
+    usernameGlow:  usernameGlow,
+    sizes: sizes,
+    cardStyle: cardStyle,
+    activity: {
+      avatar: els.actAvatar.value.trim(),
+      name:   els.actName.value.trim(),
+      verb:   els.actVerb.value.trim(),
+      status: els.actStatus.value.trim()
+    },
+    socials: socials,
+    particles: {
+      count: Math.max(0, Math.min(200, parseInt(els.particleCount.value) || 0)),
+      symbols: symbols.length ? symbols : ['❄','✦','·'],
+      color: els.particleColor.value || '#ffffff',
+      minSize: 8, maxSize: 18
+    }
+  };
+}
+
+async function save() {
+  const newSlug = els.slug.value.trim();
+  if (!/^[a-zA-Z0-9_-]{2,40}$/.test(newSlug)) return showError('Slug 格式錯誤');
+  const cfg = collectConfig();
+  const r = await fetch('/api/sites/' + encodeURIComponent(originalSlug), {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config: cfg, slug: newSlug })
+  });
+  const data = await r.json();
+  if (!r.ok) return showError(data.error || '儲存失敗');
+  showOk('儲存成功 ✓');
+  if (data.slug !== originalSlug) {
+    originalSlug = data.slug;
+    history.replaceState(null, '', '/admin/edit/' + encodeURIComponent(data.slug));
+    updateUrl(data.slug);
+  }
+  refreshPreview();
+}
+
+function refreshPreview() {
+  preview.src = '/' + encodeURIComponent(originalSlug) + '?t=' + Date.now();
+}
+
+$('saveBtn').addEventListener('click', save);
+$('saveBtn2').addEventListener('click', save);
+$('reloadPreviewBtn').addEventListener('click', refreshPreview);
+
+// ─── Slider value labels ─────────────────────────────────────
+function updateGlowSliderLabels() {
+  $('glowStrengthVal').textContent = els.glowStrength.value + '%';
+}
+function updateUsernameStyleLabels() {
+  const v = parseFloat(els.usernameSway.value) || 0;
+  $('usernameSwayVal').textContent = v === 0 ? '0s（關閉）' : v.toFixed(1) + 's';
+}
+function updateSizeSliderLabels() {
+  $('sizeAccentVal').textContent    = els.sizeAccent.value + 'px';
+  $('sizeUsernameVal').textContent  = els.sizeUsername.value + 'px';
+  $('sizeAvatarVal').textContent    = els.sizeAvatar.value + 'px';
+  $('sizeCardScaleVal').textContent = parseFloat(els.sizeCardScale.value).toFixed(2) + '×';
+  $('sizeSocialVal').textContent    = els.sizeSocial.value + 'px';
+}
+function updateCardSliderLabels() {
+  $('cardBgAlphaVal').textContent     = els.cardBgAlpha.value + '%';
+  $('cardBlurVal').textContent        = els.cardBlur.value + 'px';
+  $('cardBorderAlphaVal').textContent = els.cardBorderAlpha.value + '%';
+  $('cardRadiusVal').textContent      = els.cardRadius.value + 'px';
+}
+function updateAllLabels() {
+  updateGlowSliderLabels();
+  updateUsernameStyleLabels();
+  updateSizeSliderLabels();
+  updateCardSliderLabels();
+}
+['glowStrength'].forEach(function(id) {
+  $(id).addEventListener('input', updateGlowSliderLabels);
+});
+['usernameSway'].forEach(function(id) {
+  $(id).addEventListener('input', updateUsernameStyleLabels);
+});
+['sizeAccent','sizeUsername','sizeAvatar','sizeCardScale','sizeSocial'].forEach(function(id) {
+  $(id).addEventListener('input', updateSizeSliderLabels);
+});
+['cardBgAlpha','cardBlur','cardBorderAlpha','cardRadius'].forEach(function(id) {
+  $(id).addEventListener('input', updateCardSliderLabels);
+});
+
+// ─── Image upload helpers (client-side resize → base64) ──────
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+function resizeImageToDataUrl(file, outputSize) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onerror = function() { reject(new Error('讀取檔案失敗')); };
+    reader.onload = function() {
+      const img = new Image();
+      img.onerror = function() { reject(new Error('無法解析圖片')); };
+      img.onload = function() {
+        const size = outputSize;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width  - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+        const wantPng = /image\/(png|gif|webp)/.test(file.type);
+        resolve(wantPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Activity-card avatar (200px)
+const avatarPreview      = $('avatarPreview');
+const avatarPreviewImg   = $('avatarPreviewImg');
+const avatarPlaceholder  = $('avatarPlaceholder');
+const uploadAvatarBtn    = $('uploadAvatarBtn');
+const clearAvatarBtn     = $('clearAvatarBtn');
+const avatarFileInput    = $('avatarFile');
+
+function updateAvatarPreview() {
+  const v = (els.actAvatar.value || '').trim();
+  if (v) {
+    avatarPreviewImg.src = v;
+    avatarPreviewImg.style.display = 'block';
+    avatarPlaceholder.style.display = 'none';
+  } else {
+    avatarPreviewImg.removeAttribute('src');
+    avatarPreviewImg.style.display = 'none';
+    avatarPlaceholder.style.display = 'flex';
+  }
+}
+async function handleAvatarFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return showError('請選擇圖片檔案');
+  if (file.size > AVATAR_MAX_BYTES)    return showError('圖片過大（最大 5MB）');
+  try {
+    const dataUrl = await resizeImageToDataUrl(file, 200);
+    els.actAvatar.value = dataUrl;
+    updateAvatarPreview();
+    showOk('頭貼已套用，記得按「儲存變更」');
+  } catch (e) { showError(e.message || '處理圖片失敗'); }
+}
+uploadAvatarBtn.addEventListener('click', function() { avatarFileInput.click(); });
+avatarPreview.addEventListener('click', function() { avatarFileInput.click(); });
+avatarFileInput.addEventListener('change', function(e) {
+  const f = e.target.files && e.target.files[0];
+  handleAvatarFile(f);
+  e.target.value = '';
+});
+clearAvatarBtn.addEventListener('click', function() { els.actAvatar.value = ''; updateAvatarPreview(); });
+els.actAvatar.addEventListener('input', updateAvatarPreview);
+['dragenter','dragover'].forEach(function(ev) {
+  avatarPreview.addEventListener(ev, function(e) { e.preventDefault(); avatarPreview.classList.add('drag-over'); });
+});
+['dragleave','drop'].forEach(function(ev) {
+  avatarPreview.addEventListener(ev, function(e) { e.preventDefault(); avatarPreview.classList.remove('drag-over'); });
+});
+avatarPreview.addEventListener('drop', function(e) {
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  handleAvatarFile(f);
+});
+
+// ─── Init ────────────────────────────────────────────────────
+loadSite().catch(function(err) { showError(err.message || '載入失敗'); });
+</script>
+</body>
+</html>

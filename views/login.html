@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>登入 — Profile Builder</title>
+<link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+<main class="auth-wrap">
+  <div class="auth-card">
+    <h1>歡迎回來</h1>
+    <p class="subtitle">登入以管理你的個人介紹網站</p>
+
+    <div class="alert alert-error" id="alert"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label class="float">帳號</label>
+        <input type="text" name="username" required autocomplete="username" placeholder="your username" />
+      </div>
+      <div class="field">
+        <label class="float">密碼</label>
+        <input type="password" name="password" required autocomplete="current-password" placeholder="your password" />
+      </div>
+      <button type="submit" class="btn btn-block">登入</button>
+    </form>
+
+    <p style="text-align:center; margin-top: 22px; color: var(--fg-mute); font-size: 14px;">
+      還沒有帳號？ <a class="muted-link" href="/register">立即註冊</a>
+    </p>
+  </div>
+</main>
+
+<script>
+const form = document.getElementById('loginForm');
+const alertBox = document.getElementById('alert');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  alertBox.classList.remove('show');
+  const fd = new FormData(form);
+  const body = { username: fd.get('username').trim(), password: fd.get('password') };
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await r.json();
+    if (!r.ok) {
+      alertBox.textContent = data.error || '登入失敗';
+      alertBox.classList.add('show');
+      return;
+    }
+    location.href = data.redirect || '/admin';
+  } catch (err) {
+    alertBox.textContent = '網路錯誤，請稍後再試';
+    alertBox.classList.add('show');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>儀表板 — Profile Builder</title>
+<link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">✦ Profile Builder</div>
+  <div class="user">
+    <span class="name" id="userName"></span>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">登出</button>
+  </div>
+</header>
+
+<main class="dashboard">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h2>我的介紹頁面</h2>
+      <p class="hint">每個頁面都有自己獨立的網址，可分享給任何人</p>
+    </div>
+    <button class="btn" id="newBtn">＋ 建立新頁面</button>
+  </div>
+
+  <div id="sitesContainer">
+    <div class="empty-state">
+      <div class="icon">⌛</div>
+      <p>載入中…</p>
+    </div>
+  </div>
+</main>
+
+<!-- New site modal -->
+<div class="modal-overlay" id="newModal">
+  <div class="modal">
+    <h3>建立新頁面</h3>
+    <p class="sub">為你的頁面取一個網址（slug）。建立後可隨時修改。</p>
+    <div class="alert alert-error" id="newAlert"></div>
+    <form id="newForm">
+      <div class="field">
+        <label class="float">網址 slug</label>
+        <input type="text" name="slug" required minlength="2" maxlength="40" pattern="[a-zA-Z0-9_-]{2,40}" placeholder="e.g. 1yn, mypage" autocomplete="off" />
+        <div class="help" id="slugHelp">只能用英數、底線、連字號 (2-40 字)。最終網址：<code id="urlPreview">/your-slug</code></div>
+      </div>
+      <div class="field">
+        <label class="float">顯示名稱（可之後再改）</label>
+        <input type="text" name="username" maxlength="40" placeholder="your display name" />
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn" style="flex:1">建立並編輯</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const userName = document.getElementById('userName');
+const sitesContainer = document.getElementById('sitesContainer');
+const logoutBtn = document.getElementById('logoutBtn');
+const newBtn = document.getElementById('newBtn');
+const newModal = document.getElementById('newModal');
+const newForm = document.getElementById('newForm');
+const newAlert = document.getElementById('newAlert');
+const slugInput = newForm.querySelector('[name=slug]');
+const urlPreview = document.getElementById('urlPreview');
+
+async function loadMe() {
+  const r = await fetch('/api/me');
+  if (!r.ok) { location.href = '/login'; return; }
+  const me = await r.json();
+  userName.textContent = '👤 ' + me.username;
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  return new Date(s.replace(' ', 'T') + 'Z').toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+async function loadSites() {
+  const r = await fetch('/api/sites');
+  if (!r.ok) return;
+  const sites = await r.json();
+  if (!sites.length) {
+    sitesContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">✨</div>
+        <p style="margin-bottom:6px;">你還沒有任何頁面</p>
+        <p style="font-size:13px;">點右上「＋ 建立新頁面」開始</p>
+      </div>`;
+    return;
+  }
+  sitesContainer.innerHTML = `<div class="sites-grid">${sites.map(s => `
+    <div class="site-card">
+      <div class="slug-line"><span>${location.origin}/</span><b>${escapeHtml(s.slug)}</b></div>
+      <div class="meta">
+        <span class="pill">👁 ${s.views} 次瀏覽</span>
+        <span class="pill">🕒 ${fmtDate(s.updated_at)}</span>
+      </div>
+      <div class="actions">
+        <a class="btn btn-sm" href="/admin/edit/${encodeURIComponent(s.slug)}">編輯</a>
+        <a class="btn btn-ghost btn-sm" href="/${encodeURIComponent(s.slug)}" target="_blank">預覽</a>
+        <button class="btn btn-ghost btn-sm" data-copy="${location.origin}/${s.slug}">複製連結</button>
+        <button class="btn btn-ghost btn-sm" data-delete="${escapeHtml(s.slug)}" style="margin-left:auto;color:#ff8090;border-color:rgba(255,77,109,.25)">刪除</button>
+      </div>
+    </div>`).join('')}</div>`;
+
+  sitesContainer.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    navigator.clipboard.writeText(b.dataset.copy);
+    const t = b.textContent; b.textContent = '已複製 ✓';
+    setTimeout(() => b.textContent = t, 1500);
+  }));
+  sitesContainer.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(`確定要刪除「${b.dataset.delete}」這個頁面嗎？此動作無法復原。`)) return;
+    const r = await fetch('/api/sites/' + encodeURIComponent(b.dataset.delete), { method: 'DELETE' });
+    if (r.ok) loadSites();
+  }));
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c])); }
+
+logoutBtn.addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+});
+
+newBtn.addEventListener('click', () => { newModal.classList.add('show'); newAlert.classList.remove('show'); newForm.reset(); urlPreview.textContent = '/your-slug'; });
+newModal.addEventListener('click', (e) => { if (e.target === newModal || e.target.dataset.close !== undefined) newModal.classList.remove('show'); });
+
+let slugTimer;
+slugInput.addEventListener('input', () => {
+  const v = slugInput.value.trim();
+  urlPreview.textContent = '/' + (v || 'your-slug');
+  clearTimeout(slugTimer);
+  if (!v || !/^[a-zA-Z0-9_-]{2,40}$/.test(v)) return;
+  slugTimer = setTimeout(async () => {
+    const r = await fetch('/api/check-slug?slug=' + encodeURIComponent(v));
+    const data = await r.json();
+    if (!data.available) {
+      newAlert.textContent = data.reason === 'reserved' ? '此網址為系統保留字' : '此網址已被使用';
+      newAlert.classList.add('show');
+    } else {
+      newAlert.classList.remove('show');
+    }
+  }, 350);
+});
+
+newForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  newAlert.classList.remove('show');
+  const fd = new FormData(newForm);
+  const body = { slug: fd.get('slug').trim(), username: (fd.get('username') || '').trim() };
+  const r = await fetch('/api/sites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await r.json();
+  if (!r.ok) {
+    newAlert.textContent = data.error || '建立失敗';
+    newAlert.classList.add('show');
+    return;
+  }
+  location.href = '/admin/edit/' + encodeURIComponent(data.slug);
+});
+
+loadMe();
+loadSites();
+</script>
+</body>
+</html>
