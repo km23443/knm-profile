@@ -1,0 +1,12 @@
+node_modules
+data.db
+data.db-*
+.env
+.env.local
+.git
+.gitignore
+_original_backup
+*.bat
+*.log
+.vscode
+.idea
